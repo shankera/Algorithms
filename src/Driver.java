@@ -1,42 +1,114 @@
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.LinkedList;
+import java.util.Random;
+
 public class Driver {
-	private static Node[] graph = new Node[7]; 
+	static LinkedList<Edge> edges;
+	static int wArr[];
+	static int pArr[];
+	static int numVertices;
+	static int size;
+	static int sourceVertex = 0;
+
 	public static void main(String[] args){
-		for(int x = 0; x < graph.length; x++){
-			graph[x] = new Node("N"+x);
+		File file = new File("times.txt");
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter(file);
+			edges = new LinkedList<Edge>();
+			test();
+			for(int x = 5; x < 505; x++){
+				genGraph(x);
+				long t1 = System.nanoTime();
+				doStuff();
+				long t2 = System.nanoTime();
+				writer.println(t2-t1);
+			}
+			writer.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} 
+	}
+	private static void doStuff(){
+		size = edges.size();
+		wArr = new int[numVertices];
+		pArr = new int[numVertices];
+		relax();
+	}
+	private static void genGraph(int seed){
+		edges = new LinkedList<Edge>();
+		Random rand = new Random();
+		numVertices = seed;
+		int other;
+		for(int x = 0; x < numVertices; x++){
+			other = rand.nextInt(numVertices);
+			edges.add(new Edge(x, other, rand.nextInt(10)));
+			edges.add(new Edge(other, x, rand.nextInt(10)));
 		}
+	}
+	private static void test(){
+
+		numVertices = 7;
 		graphCreator();
-		
-		
-		//Create list of nodes
-		//Create connections between nodes
-		//N0, N1, N2, N3, N4, N5, N6
-		//find shortest path between two nodes > k
-		//k is a specified value
-		//MINIMUM total SUM OF EDGE WITHGS among all possible S to T paths
-		//with no more than K edges
-	
+		doStuff();
+		if(cycle()){
+			for(int x = 0; x < numVertices; x++){
+				System.out.println(sourceVertex + " --> " + wArr[x]);
+			}
+		}
+		print();
 	}
 	private static void graphCreator(){
-		graph[0].addEdge(graph[1], 1);
-		graph[0].addEdge(graph[2], 3);
-		graph[0].addEdge(graph[6], 5);
-		graph[1].addEdge(graph[0], 2);
-		graph[1].addEdge(graph[2], 1);
-		graph[1].addEdge(graph[5], 7);
-		graph[1].addEdge(graph[6], 1);
-		graph[2].addEdge(graph[0], 3);
-		graph[2].addEdge(graph[1], 2);
-		graph[2].addEdge(graph[3], 2);
-		graph[2].addEdge(graph[4], 1);
-		graph[3].addEdge(graph[2], 4);
-		graph[3].addEdge(graph[4], 5);
-		graph[4].addEdge(graph[2], 2);
-		graph[4].addEdge(graph[3], 1);
-		graph[5].addEdge(graph[1], 3);
-		graph[5].addEdge(graph[6], 4);
-		graph[6].addEdge(graph[0], 6);
-		graph[6].addEdge(graph[1], 1);
-		graph[6].addEdge(graph[5], 2);
+		edges.add(new Edge(0,1,1));
+		edges.add(new Edge(0,2,3));
+		edges.add(new Edge(0,6,5));
+		edges.add(new Edge(1,0,1));
+		edges.add(new Edge(1,2,1));
+		edges.add(new Edge(1,5,7));
+		edges.add(new Edge(1,6,1));
+		edges.add(new Edge(2,0,3));
+		edges.add(new Edge(2,1,1));
+		edges.add(new Edge(2,3,2));
+		edges.add(new Edge(2,4,1));
+		edges.add(new Edge(3,2,2));
+		edges.add(new Edge(3,4,5));
+		edges.add(new Edge(4,2,1));
+		edges.add(new Edge(4,3,5));
+		edges.add(new Edge(5,1,7));
+		edges.add(new Edge(5,6,4));
+		edges.add(new Edge(6,0,5));
+		edges.add(new Edge(6,1,1));
+		edges.add(new Edge(6,5,4));
+	}
+	private static void relax(){
+		for(int i = 0; i<numVertices; i++){
+			wArr[i] = Integer.MAX_VALUE;
+			pArr[i] = -1;
+		}
+		wArr[sourceVertex]=0;
+		for(int i = 0; i < numVertices-1; i++){
+			for(int j = 0; j < size; j++){
+				if(wArr[edges.get(j).u] + edges.get(j).weight < wArr[edges.get(j).v]){
+					wArr[edges.get(j).v] = wArr[edges.get(j).u] + edges.get(j).weight;
+					pArr[edges.get(j).v] = edges.get(j).u;
+				}
+			}
+		}
+	}
+	private static boolean cycle(){
+		for(int x = 0; x< size; x++){
+			if(wArr[edges.get(x).u] + edges.get(x).weight < wArr[edges.get(x).v]){
+				return false;
+			}
+		}
+		return true;
+	}
+	private static void print(){
+		for(int x = 0; x < numVertices; x++){
+			System.out.println("Vertex " + x + " preceded by " + pArr[x]);
+		}
 	}
 }
